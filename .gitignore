@@ -1,0 +1,33 @@
+# ============================================================
+# RobotIC 视觉培训教材 · YOLO 部分
+# ============================================================
+
+# ---- 数据集：体积 1.6 GB，不适合提交（获取方式见 README §7）----
+dataset/
+
+# ---- 训练 / 推理产生的中间产物 ----
+runs/
+*.cache
+*.pt
+*.engine
+*.onnx
+*.rknn
+*.torchscript
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*~
+
+# ---- 临时文件 ----
+*.tmp
+*.log
