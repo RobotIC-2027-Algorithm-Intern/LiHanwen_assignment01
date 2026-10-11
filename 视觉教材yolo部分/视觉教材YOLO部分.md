@@ -57,381 +57,18 @@ ai工具很强大，非常强大，我甚至认为在当下这个时代，学生
 
 ## 2.1 YOLO 开发环境配置
 
-**本节目标**：让你能够独立创建、进入并检查一个 YOLO 开发环境，并真正理解“**环境隔离**”和“**解释器位置**”这两个概念。
-
-开始之前，请先记住三件事：
-
-1. **你已经有基础**：Assignment-0 里你是用 Anaconda 的**图形界面**建的环境。本节不重复图形化操作，而是用**命令行**再建一个专门给 YOLO 用的环境——这会让你真正看懂“环境”到底是什么。
-2. **平台约定**：本教材以 **Linux（Ubuntu）为主线**，**Windows 单独给出代码块**。两块内容不会混写，请只看你自己系统对应的那一块。
-3. **每一步都要检查**：本节每个操作后面都有一个「✅ 检查」环节，告诉你如何确认这一步真的成功。**不要跳过检查**——它是你以后独立排查错误的起点。
-
-------------------------------------------------------------------------
-
-### 2.1.1 Python 环境与包管理的基本概念
-
-#### 2.1.1.1 什么是 Python 环境
-
-先分清三个东西：
-
-- **Python 解释器**：一个真正“会执行 Python 代码”的程序。你在终端里敲 `python` 时，被启动的就是某个解释器。
-- **第三方包（库）**：别人写好的功能，比如 `opencv-python`、`torch`、`ultralytics`。你 `import` 的时候用的就是它们。
-- **Python 环境**：一个**独立的工具箱**，里面装着**一个解释器**和**属于它的那批包**。
-
-打个比方：解释器像“一间房间”，包像“房间里的工具”。**一个环境，就是一间装着特定工具的房间。**
-
-**关键点**：同一个包名（例如 `torch`），装在不同环境里，是**各自独立的两份**。你在 A 房间换了工具，B 房间的工具不会跟着变。
-
-#### 2.1.1.2 为什么不同项目需要使用不同环境
-
-用一个真实会遇到的例子说明：
-
-- 项目 A 需要 `torch 2.0`；
-- 项目 B 需要 `torch 2.6`。
-
-如果你把它们都装进同一个环境，后装的会**覆盖**先装的——于是总有一个项目跑不起来。更麻烦的是，当你已经记不清装过什么版本时，这种冲突非常难查。
-
-这是一个大坑：Assignment-0 里你已经把 `OpenCV` 环境调通了（OpenCV + PyTorch GPU）。YOLO 需要的 `ultralytics` 会连带管理 `torch / torchvision / opencv-python / numpy` 等包，**如果直接装进 `OpenCV` 环境，可能把已经调好的版本改坏**。所以本课程给你一个更稳妥的做法：
-
-> **一个项目（或一类任务）用一个独立环境。** YOLO 用一个新环境，`OpenCV` 环境保持原样不动。
-
-#### 2.1.1.3 Conda、Python 与 pip 之间的关系
-
-这三个词经常被新人混为一谈，其实分工很明确：
-
-| 名字 | 它是什么 | 类比 |
-| --- | --- | --- |
-| **Conda** | 环境和软件包管理器 | 房间管理员：负责建房间、拆房间 |
-| **Python** | 代码解释器 | 住在房间里、真正干活的人 |
-| **pip** | Python 包安装工具 | 往房间里搬 Python 工具的人 |
-
-常见的疑问：
-
-- **“Conda 和 pip 是不是同一个东西？”** 不是。Conda 管的是“环境”和“软件包”（可以包括 Python 以外的软件）；pip 只负责往某个 Python 环境里装 Python 包。
-- **“那我该用哪个装包？”** 在本课程里，**环境用 conda 建，Python 包用 pip 装**。
-
-#### 2.1.1.4 Python 解释器与 Python 包安装位置
-
-新人最常遇到的问题长这样：
-
-> “我明明 `pip install` 成功了，为什么 `import` 还是报错说找不到模块？”
-
-原因几乎总是同一个：**你装到了 A 环境，但运行时用的是 B 环境。**
-
-所以请记住一个固定顺序：
-
-```text
-先确认“当前在哪个环境”
-        ↓
-再确认“python 和 pip 分别指向哪个环境”
-        ↓
-然后才安装或运行
-```
-
-记住一句话：**“先确认解释器，再排查包。”** 后面的 2.1.2.5 会教你具体怎么做。
-
-------------------------------------------------------------------------
-
-### 2.1.2 Conda 的基本使用
-
-下面所有命令都要在**终端**里执行。  
-悄悄告诉你，你可以把命令复制到终端中直接运行，但是要注意，在终端中，ctrl + c 不是复制，它会直接中断当前命令，你需要通过ctrl + shift + c进行复制，同理，用ctrl + shift + v进行粘贴。  
-
-- **Linux**：直接打开终端（Ubuntu 常用快捷键 `Ctrl + Alt + T`）。
-- **Windows**：推荐使用 **Anaconda Prompt**（开始菜单里搜索即可）。它是“已经配置好 conda 的命令行”，比直接开 `cmd` 更省事。
-
-> 环境名约定：**Linux 用 `yolo_Linux`，Windows 用 `yolo`**。下面的命令里请使用你自己系统对应的那个。
-
-#### 2.1.2.1 创建 Conda 环境
-
-```bash
-# Linux
-conda create -n yolo_Linux python=3.10
-```
-
-```bat
-:: Windows
-conda create -n yolo python=3.10
-```
-
-逐部分解释：
-
-- `conda`：调用 conda 这个工具；
-- `create`：表示“创建”；
-- `-n yolo_Linux`：`-n` 是 `--name` 的缩写，指定环境名字；
-- `python=3.10`：指定这个环境使用 Python 3.10（与 Assignment-0 的 Python 版本保持一致）。
-
-执行过程中会提示确认，输入 `y` 再回车即可。
-
-**✅ 检查**：
-
-```bash
-conda env list
-```
-
-你应该能在列表里看到刚创建的 `yolo_Linux`（或 Windows 的 `yolo`）。**看到它就说明环境创建成功。**
-
-#### 2.1.2.2 激活与退出 Conda 环境
-
-“激活”= 让终端接下来的操作都发生在某个环境里。
-
-```bash
-# Linux
-conda activate yolo_Linux
-```
-
-```bat
-:: Windows
-conda activate yolo
-```
-
-退出：
-
-```bash
-conda deactivate
-```
-
-**✅ 检查**：激活后，命令行提示符**最前面会多出一对括号**，里面是环境名，例如：
-
-```text
-(yolo_Linux) user@machine:~$
-```
-
-**看到这个 `(yolo_Linux)` 前缀，就说明你已经在该环境里。** 这是最重要、最常用的一个“我在不在环境里”的信号。
-
-#### 2.1.2.3 查看已有环境
-
-```bash
-conda env list
-```
-
-输出的每一行是一个环境，**带 `*` 号的那一行就是当前激活的环境**。
-
-**✅ 检查**：`*` 是否落在你期望的环境上？如果不是，先用 `conda activate` 切过去。
-
-#### 2.1.2.4 删除不再使用的环境
-
-```bash
-conda remove -n 环境名 --all
-```
-
-例如删除一个你确认不再需要、且**你自己创建**的环境：
-
-```bash
-conda remove -n yolo_Linux --all
-```
-
-> ⚠️ **警告**：这条命令会把整个环境连同里面的包一起删掉，**不可恢复**。请务必：
+> 📖 **本节的操作步骤已经独立成篇，教材里不再重复。**
 >
-> 1. 只删除**你自己创建、且确定无用**的环境；
-> 2. 不要删除 `base`，也不要删除不了解用途的环境（比如 Assignment-0 里的 `main`、`OpenCV`）。
-
-**✅ 检查**：删除后再次运行 `conda env list`，确认该环境已从列表中消失。
-
-#### 2.1.2.5 查看当前 Python 与 pip 所属环境
-
-这是本小节**最重要**的一步，也是解决“装了却 import 不到”的钥匙。
-
-```bash
-# Linux：查看 python 和 pip 的实际路径
-which python
-which pip
-```
-
-```bat
-:: Windows：查看 python 和 pip 的实际路径
-where python
-where pip
-```
-
-再查看版本：
-
-```bash
-python --version
-pip --version
-```
-
-**怎么判断对不对？** 关键看路径里有没有你的环境名。
-
-- 在 Linux 上，如果当前在 `yolo_Linux` 环境，`which python` 通常会输出类似
-  `/home/你的用户名/anaconda3/envs/yolo_Linux/bin/python` 的路径——**路径里出现 `envs/yolo_Linux` 就对了**。
-- 如果输出的是 `base` 的路径（例如 `/home/.../anaconda3/bin/python`，没有 `envs/...`），说明**你其实还在 base 环境**。
-
-**✅ 检查**：
-
-```bash
-python -c "import sys; print(sys.executable)"
-```
-
-这条会打印“当前 python 解释器的完整路径”，效果和 `which python` 一致，但更直接。
-
-> **小技巧**：始终用 `python -m pip install 包名` 来装包。`-m pip` 表示“用**当前这个 python** 自带的 pip 来装”，能把“pip 装错环境”的概率降到最低。
-
-------------------------------------------------------------------------
-
-### 2.1.3 YOLO 开发环境安装
-
-这一小节我们把 2.1.2 的命令串起来，正式把 YOLO 环境装好。**同样以 Linux 为主线，Windows 用单独代码块给出。**
-
-#### 2.1.3.1 创建本课程使用的 Python 环境
-
-```bash
-# Linux
-conda create -n yolo_Linux python=3.10
-conda activate yolo_Linux
-```
-
-```bat
-:: Windows
-conda create -n yolo python=3.10
-conda activate yolo
-```
-
-**✅ 检查**：
-
-```bash
-python --version
-```
-
-应输出 `Python 3.10.x`；并且命令行提示符前出现 `(yolo_Linux)`（或 `(yolo)`）。
-
-#### 2.1.3.2 PyTorch 与 CUDA 的基本关系
-
-- **PyTorch**：负责深度学习计算（YOLO 的底层就是它）。
-- **CUDA**：让**NVIDIA 显卡（GPU）**参与加速的一套工具。
-
-简单理解：**PyTorch 负责“算”，CUDA 负责让 NVIDIA GPU 帮它“算得更快”**。没有 NVIDIA GPU 也能跑，只是用 CPU，速度会慢一些。这一小节只需要你建立这个认识，不必深究 CUDA 底层。
-
-#### 2.1.3.3 安装 PyTorch
-
-**第一步：确认自己有没有 NVIDIA GPU / 装的是哪个 CUDA 版本。**
-
-```bash
-nvidia-smi
-```
-
-- 如果能看到一张表格并显示 `CUDA Version: xx.x`，说明你有 NVIDIA GPU，记住这个版本号。
-- 如果提示 `command not found` 或类似信息，通常说明**没有可用的 NVIDIA GPU**，那就走后面的 **CPU 版本**。
-
-**第二步：根据你的情况，选择对应的安装方式。**
-
-> 先看结论：**有 NVIDIA 显卡就装 GPU 版，没有就装 CPU 版。** 两者都能完成本课程的全部内容，区别只是训练速度。
-
-**情况 A：有 NVIDIA 显卡 —— 安装 GPU 版**
-
-打开 PyTorch 官方安装页面：<https://pytorch.org/get-started/locally/>，按你的系统、包管理器（选 `pip`）和 **CUDA 版本**选择，然后**复制页面当场给出的命令**（务必以官方页面生成的命令为准）。
-
-**该选哪个 CUDA 版本？关键看你的显卡型号。** 不同显卡需要的最低 CUDA 版本不同，越新的显卡通常需要越新的 CUDA，请以上面官方页面里的选项为准，不要凭记忆猜。
-
-**Linux —— 按显卡选择 CUDA 版本**
-
-```bash
-# Linux 示例（CUDA 12.4 对应的 pip 命令）
-python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
-```
-
-> **Linux 提醒**：显卡型号与 CUDA 版本要对应。较新的 **RTX 50 系（Blackwell）** 需要较新的 CUDA（如 cu128）；如果装了过旧的版本，可能出现“`torch.cuda.is_available()` 返回 `True`，但一训练就报 `no kernel image is available`”的假成功现象。
-
-**Windows —— 沿用 Assignment-0 的约定**
-
-```bat
-:: Windows 示例（CUDA 12.4 对应的 pip 命令）
-python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
-```
-
-> **本课程约定（与 Assignment-0 的 Windows 版教程一致）**：Windows 下，如果你的 `nvidia-smi` 显示的 CUDA 版本**高于 12.4**，仍然选择 **12.4** 对应的安装命令。
-
-**✅ 检查**：
-
-```bash
-python -c "import torch; print(torch.__version__)"
-```
-
-版本号里带 `+cu124`（或类似的 `+cuXXX`）就说明装的是 **GPU 版**。
-
-**情况 B：没有 NVIDIA 显卡 —— 安装 CPU 版**
-
-**没有显卡完全不影响本课程的学习**，只是训练、推理会慢一些（本课程的数据量很小，CPU 版足够跑通全流程）。请完整执行下面两步。
-
-**B-1. 安装 CPU 版 PyTorch。**
-
-```bash
-# Linux
-python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-```
-
-```bat
-:: Windows
-python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
-```
-
-关键在 `--index-url https://download.pytorch.org/whl/cpu`：它让 pip 去 PyTorch 官方的 **CPU 专用仓库**下载，避免装成体积巨大的 GPU 版本。
-
-**✅ 检查**：
-
-```bash
-python -c "import torch; print(torch.__version__)"
-```
-
-版本号里带 `+cpu`（例如 `2.14.0+cpu`）就说明 **CPU 版**装好了。
-
-**B-2. 确认 GPU 检查符合预期。**
-
-```bash
-python -c "import torch; print(torch.cuda.is_available())"
-```
-
-CPU 版这里应当输出 `False`——**这是正常的**，含义是“当前没有可用的 GPU”，而不是“环境装坏了”。请带着这个预期继续 2.1.3.4、2.1.3.5。
-
-> **如果之后想把 CPU 版换成 GPU 版（或反过来）**：不要直接重跑安装命令——pip 会认为 `torch` 已经满足要求而**跳过安装**。正确做法是**先卸载、再安装**：
+> 完整的环境配置教程是 **《YOLO 开发环境配置 与 X-AnyLabeling 安装》**（Assignment-0 的配套教程，
+> 文件名 `YOLO开发环境配置与X-AnyLabeling安装.md`）。**请先完成那份教程，再继续本章。**
 >
-> ```bash
-> python -m pip uninstall -y torch torchvision
-> # 然后重新执行 2.1.3.3 中你对应的那条安装命令
-> ```
-
-> **如果报 `ModuleNotFoundError: No module named 'torch'`**：说明装到了别的环境，或根本没装成功——回到 2.1.2.5 检查解释器。
-
-#### 2.1.3.4 安装 Ultralytics
-
-`ultralytics` 就是提供 `YOLO` 类、以及 `yolo` 命令行的那个包。
-
-```bash
-# Linux 与 Windows 通用
-python -m pip install ultralytics
-```
-
-**✅ 检查（两种任选，建议都试）**：
-
-```bash
-# 检查 1：能否在 Python 里 import
-python -c "import ultralytics; print(ultralytics.__version__)"
-
-# 检查 2：命令行工具是否可用（会打印一段环境信息）
-yolo checks
-```
-
-- 检查 1 能打印版本号，说明 Python 里可以正常使用；
-- 检查 2 能打印出环境信息表，说明命令行也装好了。**这一步是“环境是否真的可用”的总验收。**
-
-> **两条“看着像报错、其实正常”的提示**（实机确认）：
+> 那份教程包含：
 >
-> 1. **第一次 `import ultralytics` 可能打印 `WARNING ⚠️ Ultralytics settings updated to the latest schema`**，这只是首次运行时更新配置文件，**无害**。
-> 2. **`yolo checks` 可能出现一行 `ultralytics-platform ❌ (not installed) ... python_version >= "3.11"`**。该依赖只在 Python 3.11 及以上才需要，我们用 Python 3.10，**这一行 ❌ 属正常**。真正要关注的是 `torch`、`torchvision`、`opencv-python` 等核心包前面是 ✅。
-
-#### 2.1.3.5 检查 GPU 是否能够被 PyTorch 正确调用
-
-```bash
-python -c "import torch; print(torch.cuda.is_available())"
-```
-
-结果只有两种：
-
-- 输出 `True`：PyTorch 能用到 GPU，训练会更快。
-- 输出 `False`：用不了 GPU。**这不代表环境装坏了**——如果你本来就没有 NVIDIA GPU，装的就是 CPU 版本，`False` 是完全正常的。若你**确实有** NVIDIA GPU 却得到 `False`，请见 2.1.4.3。
-
-**为什么必须先查这一步？** 因为后面训练时你会看到日志里出现“device / cuda / cpu”等字样，先在这里确认，才能真正读懂那些日志。
-
-------------------------------------------------------------------------
+> - **第一部分「YOLO 开发环境配置」**：Python 环境与包管理概念（**1.1**）、Conda 基本使用（**1.2**）、
+>   安装 PyTorch 与 Ultralytics（**1.3**）、开发环境常见问题（**1.4**）；
+> - **第二部分「X-AnyLabeling 的安装」**：标注工具的下载、安装与启动。
+>
+> 本节**只保留「开发环境常见问题」**（2.1.4）——新手最容易卡在这里；每个问题都标了**去上述教程的哪一节解决**。
 
 ### 2.1.4 开发环境常见问题
 
@@ -450,6 +87,8 @@ python -m pip --version             # 3. pip 是否属于同一个环境？
 python -m pip install 包名          # 4. 用“当前 python 的 pip”重装一次
 ```
 
+> 📖 **去哪解决**：**Assignment-0 教程 1.1.4**（解释器与包的位置）+ **1.2.5**（查当前 python / pip 属于哪个环境）。
+
 #### 2.1.4.2 VS Code / PyCharm 使用了错误的 Python 解释器
 
 IDE（编辑器）里运行的代码，用的解释器**可能和终端里不是同一个**。这会造成“终端里能跑，IDE 里报错”的诡异现象。
@@ -461,6 +100,8 @@ IDE（编辑器）里运行的代码，用的解释器**可能和终端里不是
 3. 在列表里选中你刚建的环境（Linux `yolo_Linux` / Windows `yolo`）。
 
 **✅ 检查**：选中后，VS Code 窗口角落会显示当前解释器；确认它的路径里带有 `envs/yolo_Linux`（或 Windows 下对应的 yolo 环境）。
+
+> 📖 **去哪解决**：**Assignment-0 教程 1.2.5**（怎么确认解释器 / pip 指向哪个环境）。
 
 #### 2.1.4.3 PyTorch 无法调用 GPU
 
@@ -474,7 +115,9 @@ IDE（编辑器）里运行的代码，用的解释器**可能和终端里不是
 python -c "import torch; print(torch.__version__)"
 ```
 
-如果版本号里带 `+cu124` 这类后缀，通常是 GPU 版；如果带 `+cpu`，就是 CPU 版。若你确实有 GPU 却装了 CPU 版，请回到 2.1.3.3，按官方页面重新安装 GPU 版本。
+如果版本号里带 `+cu124` 这类后缀，通常是 GPU 版；如果带 `+cpu`，就是 CPU 版。若你确实有 GPU 却装了 CPU 版，请按 **Assignment-0 教程的 1.3.3** 重新安装 GPU 版本。
+
+> 📖 **去哪解决**：**Assignment-0 教程 1.3.3 安装 PyTorch**（CPU 版与 GPU 版的选择、官方安装命令）+ **1.3.5**（检查 GPU 是否能被调用）。
 
 #### 2.1.4.4 遇到环境问题时应该检查什么
 
@@ -490,6 +133,8 @@ python -c "import torch; print(torch.__version__)"
 ```
 
 **核心思想**：**先确认“解释器与环境”，再怀疑“包”，最后才怀疑“代码”。** 顺序错了，排查会绕很多弯路。
+
+> 📖 **去哪解决**：**Assignment-0 教程 1.2.5**（查解释器与环境）、**1.3**（安装 PyTorch / Ultralytics）、**1.4**（常见问题）。
 
 ------------------------------------------------------------------------
 
@@ -1081,79 +726,13 @@ results[0].save("my_result.jpg")
 
 #### 2.3.2.1 X-AnyLabeling 的安装
 
-**它是什么**：X-AnyLabeling 是一款跨平台（Windows / Linux / macOS）的图像标注工具，支持导出 YOLO 格式标签，适合我们这种目标检测标注。
-
-> **⚠️ 特别注意（实测核实）**：X-AnyLabeling **要求 Python 3.11 及以上**（官方推荐 3.12），而我们的 YOLO 环境是 **Python 3.10**。因此**不要把它装进 YOLO 环境**，否则会冲突。请选择下面两种方式之一。
-
-**方式一（推荐给新人）：下载官方安装包**
-
-打开官方 Releases 页：
-
-<https://github.com/CVHub520/X-AnyLabeling/releases>
-
-打开后**向下滚动到页面底部的 `Assets` 区块**——下面这张图就是它所在的位置。**每一个安装包占一行，点击那一行最左边的文件名即可开始下载**（GitHub 没有单独的“下载按钮”）：
-
-![在 Releases 页面底部找到 Assets 区块](res/2.3_xanylabeling_assets_01.png)
-
-**怎么挑自己该下哪一个？按两步来：**
-
-1. **先按操作系统挑**（文件名里就写明了系统）：
-   - Windows → 选 `...-CPU.exe` 或 `...-Windows-CUDAxx.exe`；
-   - Linux → 选 `...-Linux-CPU` 或 `...-Linux-CUDAxx`；
-   - macOS → 选 `...-macOS-arm64-unsigned.zip`。
-2. **再决定用 CPU 版还是 CUDA 版**：
-   - **只做本教材的标注练习 → 选 CPU 版就够了**（体积更小，也不用折腾显卡驱动）；
-   - 想用“AI 辅助标注”且**你有 NVIDIA 显卡** → 选 CUDA 版，并且 **CUDA 版本要和你的显卡/驱动匹配**：较新的显卡（例如 **RTX 50 系 / Blackwell**）请选**较新的 CUDA**（如 CUDA13）；选太旧的版本可能打不开 GPU 加速。
-
-**下面这几行不要点：**
-
-- `...sha256`：那是校验码文件，不是程序；
-- `...whl` / `...tar.gz`：那是用 `pip` 安装的包（对应下面的“方式二”）；
-- `Source code (zip/tar.gz)`：源代码，不是可执行程序。
-
-**下载之后怎么运行（Linux 请特别注意）**
-
-- **Windows**：下载的是 `.exe`，双击即可运行（首次可能弹出安全提示，选择“仍要运行”）。
-- **Linux**：下载下来的是一个**可执行文件**，但它**默认没有“执行权限”**，直接双击会弹出类似下面的错误：
-
-![Linux 下载后直接双击会报错](res/2.3_xanylabeling_exe_error_01.png)
-
-  解决办法和 Assignment-0 的教程一致——**右键该文件 → 属性 → 权限 → 勾选“允许作为程序执行文件”**（不同文件管理器措辞可能略有不同，以实际显示为准），关闭后**右键 → 作为程序运行**（或再次双击）。双击之后要等一小会，加载速度较慢。
-
-  如果你更习惯命令行，也可以用一条命令解决：
-
-  ```bash
-  chmod +x X-AnyLabeling-v4.0.6-Linux-CUDA13    # 文件名换成你实际下载的那个
-  ./X-AnyLabeling-v4.0.6-Linux-CUDA13
-  ```
-
-**✅ 检查**：勾选权限（或执行 `chmod +x`）之后，双击或运行该文件，应当能**正常打开 X-AnyLabeling 的图形界面**。
-
-**方式二：用 pip 装到一个独立环境**
-
-```bash
-# 给它单独建一个环境（注意：Python 用 3.12）
-conda create -n x-anylabeling-cpu python=3.12 -y
-conda activate x-anylabeling-cpu
-
-# 安装（CPU 版；如果你要用 GPU 加速，请按官方文档换成 [gpu] 等）
-python -m pip install "x-anylabeling-cvhub[cpu]"
-```
-
-**✅ 检查**：
-
-```bash
-xanylabeling checks     # 打印系统与版本信息，能打印就说明装好了
-xanylabeling version    # 打印版本号
-```
-
-启动程序：
-
-```bash
-xanylabeling
-```
-
-> 官方文档：<https://github.com/CVHub520/X-AnyLabeling>（命令与参数以官方为准，版本更新较快）。
+> 📖 **安装步骤见 Assignment-0 配套教程的「第二部分：X-AnyLabeling 的安装」**，那一节讲了：
+>
+> - **方式一：用官方安装包** —— 打开 Releases 页面 → 滚动到底部的 **`Assets`** 区块 → 按系统和显卡挑版本下载；
+>   注意 **Linux 下载下来默认没有执行权限**，要先设置成“可执行”才能真正打开（那节有截图说明）；
+> - **方式二：用 `pip` 装到独立环境** —— 注意用 **Python 3.12**，**不要装进 YOLO 环境**。
+>
+> **装好、并且能正常打开界面**之后，再继续下面 2.3.2.2。
 
 #### 2.3.2.2 创建标注任务
 
