@@ -14,8 +14,18 @@ runs/
 *.rknn
 *.torchscript
 
-# ---- Notebook 运行产物（演示里生成的图 / 视频，不入库）----
-out/
+# ---- 讲义 notebook 的演示产物（练习生成，不入库；作业的 out/ 需要提交，故不忽略整个目录）----
+视觉教材opencv部分/out/*.avi
+视觉教材opencv部分/res/nl_*_bright.png
+视觉教材opencv部分/res/nl_santa_jpg.jpg
+视觉教材opencv部分/res/nl_santa_png.png
+
+# ---- 练习用临时文件 ----
+视觉教材opencv部分/testcv*.py
+视觉教材opencv部分/tryopencv.py
+视觉教材yolo部分/exercise2/*.jpg
+视觉教材yolo部分/result*.jpg
+*.bak-*
 
 # ---- Python ----
 __pycache__/
